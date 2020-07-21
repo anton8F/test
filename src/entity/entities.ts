@@ -1,7 +1,7 @@
-import {Entity, PrimaryGeneratedColumn, Column} from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, OneToMany} from "typeorm";
 
 @Entity()
-export class user {
+export class User extends BaseEntity {
 
     @PrimaryGeneratedColumn()
     id: number;
@@ -15,27 +15,30 @@ export class user {
     @Column()
     email: string;
 
+    @OneToMany(type => Post, post => post.author)
+    posts: Post[];
+
 }
 
 @Entity()
-export class post {
+export class Post extends BaseEntity {
 
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
-    creator: number;
+    @ManyToOne(type => User, user => user.posts)
+    author: User;
 
     @Column()
     title: string;
 
     @Column()
-    article: string;
+    body: string;
 
 }
 
 @Entity()
-export class comment {
+export class Comment extends BaseEntity {
 
     @PrimaryGeneratedColumn()
     id: number;

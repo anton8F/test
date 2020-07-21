@@ -1,48 +1,50 @@
 import "reflect-metadata";
 import {createConnection} from "typeorm";
-import {user, post, comment} from "./entity/entities";
+import {User, Post, Comment} from "./entity/entities";
 
 const run = async () => {
-    const conn = await createConnection();
+    await createConnection();
 
-    const user1 = new user();
+    const user1 = new User();
     user1.firstName = "Lev";
     user1.lastName = "Tolstoy";
     user1.email = "tolstoy@gmail.com";
-    await conn.manager.save(user1);
+    await user1.save();
 
-    const user2 = new user();
+    const user2 = new User();
     user2.firstName = "Aleksandr";
     user2.lastName = "Pushcin";
     user2.email = "pushcin@yandex.ru";
-    await conn.manager.save(user2);
+    await user2.save();
 
-    const post1 = new post();
-    post1.creator = 2;
+    const post1 = new Post();
+    post1.author = user2;
     post1.title = "winter evening";
-    post1.article = "winter morning";
-    await conn.manager.save(post1);
+    post1.body = "winter morning";
+    await post1.save();
     
-    const post2 = new post();
-    post2.creator = 1;
+    const post2 = new Post();
+    post2.author = user1;
     post2.title = "war and peace";
-    post2.article = "long story";
-    await conn.manager.save(post2);
+    post2.body = "long story";
+    await post2.save();
 
-    const comment1 = new comment();
+    const comment1 = new Comment();
     comment1.creator = 1;
     comment1.post = 2;
     comment1.comment = "This poem is beautiful!";
-    await conn.manager.save(comment1);
+    await comment1.save();
     
-    const comment2 = new comment();
+    const comment2 = new Comment();
     comment2.creator = 2;
     comment2.post = 1;
     comment2.comment = "War and peace is long.";
-    await conn.manager.save(comment2);
+    await comment2.save();
     
     console.log("Loading posts from the database...");
-    const posts = await conn.manager.find(post);
+    const posts = await Post.find({
+        relations: ['author']
+    });
     console.log("Loaded posts: ", posts);
     
     console.log("Here you can setup and run express/koa/any other framework.");
