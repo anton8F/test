@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    container_name: orm_test_db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+      POSTGRES_DB: test
+    ports:
+      - "5432:5432"
