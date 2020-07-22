@@ -1,53 +1,78 @@
 import "reflect-metadata";
-import {createConnection} from "typeorm";
-import {User, Post, Comment} from "./entity/entities";
+import {createConnection, getRepository} from "typeorm";
+import {User} from "./entities/User";
+import {Post} from "./entities/Post";
+import {Comment} from "./entities/Comment";
+
+function addUser(firstName, lastName, email){
+    const user = new User();
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    return user;
+}
+
+function addPost(author, title, body){
+    const post = new Post();
+    post.author = author;
+    post.title = title;
+    post.body = body;
+    return post;
+}
+
+function addComment(author, post, commentText){
+    const comment = new Comment();
+    comment.author = author;
+    comment.post = post;
+    comment.comment = commentText;
+    return comment;
+}
 
 const run = async () => {
     await createConnection();
-
-    const user1 = new User();
-    user1.firstName = "Lev";
-    user1.lastName = "Tolstoy";
-    user1.email = "tolstoy@gmail.com";
-    await user1.save();
-
-    const user2 = new User();
-    user2.firstName = "Aleksandr";
-    user2.lastName = "Pushcin";
-    user2.email = "pushcin@yandex.ru";
-    await user2.save();
-
-    const post1 = new Post();
-    post1.author = user2;
-    post1.title = "winter evening";
-    post1.body = "winter morning";
-    await post1.save();
     
-    const post2 = new Post();
-    post2.author = user1;
-    post2.title = "war and peace";
-    post2.body = "long story";
+    // Add users
+    const user1 = addUser("Lev", "Tolstoy", "tolstoy@gmail.com");
+    await user1.save();
+    const user2 = addUser("Aleksandr", "Pushcin", "pushcin@yandex.ru");
+    await user2.save();
+    
+    // Add posts
+    const post1 = addPost(user1, "war and peace", "long story");
+    await post1.save();
+    const post2 = addPost(user2, "winter evening", "winter morning");
     await post2.save();
 
-    const comment1 = new Comment();
-    comment1.creator = 1;
-    comment1.post = 2;
-    comment1.comment = "This poem is beautiful!";
+    // Add comments
+    const comment1 = addComment(user2, post1, "This poem is beautiful!");
     await comment1.save();
-    
-    const comment2 = new Comment();
-    comment2.creator = 2;
-    comment2.post = 1;
-    comment2.comment = "War and peace is long.";
+    const comment2 = addComment(user1, post2, "War and peace is long.");
     await comment2.save();
     
-    console.log("Loading posts from the database...");
-    const posts = await Post.find({
+    // Output posts
+    console.log("All posts: ", await Post.find({
         relations: ['author']
-    });
-    console.log("Loaded posts: ", posts);
+    }));
     
-    console.log("Here you can setup and run express/koa/any other framework.");
+    // Output posts by user
+    console.log("posts by pushcin: ", await Post.find({
+         where: {author: user2},
+         relations: ['author']
+    }));
+    
+    // Output posts with comments
+    console.log("posts and comments: ", await Post.find({
+        relations: ['comments']
+    }));
+    
+    // Update post
+    const postForUpdate = await Post.findOne({where: {id: post1.id}});
+    postForUpdate.body = "winter evening";
+    await postForUpdate.save();
+    
+    // Delete comment
+    await Comment.getRepository().delete(comment2.id);
+    
 }
 
 run().catch(console.log)
