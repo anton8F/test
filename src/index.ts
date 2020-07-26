@@ -1,43 +1,42 @@
 import "reflect-metadata";
-import {createConnection, getRepository} from "typeorm";
-import {User} from "./entities/User";
-import {Post} from "./entities/Post";
-import {Comment} from "./entities/Comment";
-
-const express = require('express')
-const bodyParser = require('body-parser')
+import { createConnection } from "typeorm";
+import { Post } from "./entities/Post";
+import express, { Router } from 'express'
+import bodyParser, { json } from 'body-parser'
 
 const app = express()
 const port = 3000
 const jsonParser = bodyParser.json()
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
 
-async function connect(){
-    await createConnection();
-}
+const router = Router()
 
-connect();
-
-app.route('/posts')
-  .get(async function(req, res) {
-    res.json(await User.findOne());
+router
+  .get('/posts', async (_req, res) => {
+    res.json(await Post.find());
   })
-  .post(urlencodedParser, async function(req, res) {
-    res.json(req.body);
+  .post('/posts', async (req, res) => {
+    res.json(await (Post.create(req.body) as unknown as Post).save());
+  })
+  .get('/posts/:id', async (req, res) => {
+    res.json(await Post.findOne(req.params.id))
+  })
+  .delete('/posts/:id', async (req, res) => {
+    await Post.delete(req.params.id)
+    res.status(200)
+  })
+  .patch('/posts/:id', async (req, res) => {
+    const post = await Post.findOne(req.params.id)
+    post.title = req.body.title
+    post.body = req.body.body
+    res.json(await post.save())
   });
 
-app.route('/posts/:id')
-  .get(function(req, res) {
-    res.send('Hello!');
-  })
-  .post(function(req, res) {
-    res.send('Bye!');
-  })
-  .put(function(req, res) {
-    res.send('Bye?');
-  });
+app.use(jsonParser)
+app.use(urlencodedParser)
+app.use(router)
 
+createConnection().then(() => {
+  app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))
+})
 
-  
-app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))
- 
