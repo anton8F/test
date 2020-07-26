@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import express, { Router } from 'express'
-import bodyParser, { json } from 'body-parser'
+import bodyParser from 'body-parser'
 
 const app = express()
 const port = 3000
@@ -13,25 +13,37 @@ const router = Router()
 
 router
   .get('/posts', async (_req, res) => {
-    res.json(await Post.find());
+    const posts = await Post.find()
+    res.render('index', { posts })
+  })
+  .get('/posts/new', (_req, res) => {
+    res.render('new')
   })
   .post('/posts', async (req, res) => {
-    res.json(await (Post.create(req.body) as unknown as Post).save());
+    const post = await (Post.create(req.body) as unknown as Post).save()
+    res.redirect(`/posts/${post.id}`)
+  })
+  .get('/posts/:id/edit', async (req, res) => {
+    const post = await Post.findOne(req.params.id)
+    res.render('edit', { post })
   })
   .get('/posts/:id', async (req, res) => {
-    res.json(await Post.findOne(req.params.id))
+    const post = await Post.findOne(req.params.id)
+    res.render('show', { post })
   })
   .delete('/posts/:id', async (req, res) => {
     await Post.delete(req.params.id)
-    res.status(200)
+    res.redirect(`/posts`)
   })
-  .patch('/posts/:id', async (req, res) => {
+  .post('/posts/:id', async (req, res) => {
     const post = await Post.findOne(req.params.id)
     post.title = req.body.title
     post.body = req.body.body
-    res.json(await post.save())
+    await post.save()
+    res.redirect(`/posts/${post.id}`)
   });
 
+app.set('view engine', 'ejs')
 app.use(jsonParser)
 app.use(urlencodedParser)
 app.use(router)
